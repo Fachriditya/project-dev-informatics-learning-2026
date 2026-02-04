@@ -2,10 +2,15 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Models\Track;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/tracks/{track:slug}', function (Track $track) {
+    return view('tracks.show', compact('track'));
+})->name('tracks.show');
 
 Route::get('/dashboard', function () {
     return view('dashboard');

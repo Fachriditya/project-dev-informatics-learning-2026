@@ -46,6 +46,21 @@ class User extends Authenticatable
         ];
     }
 
+        public function courses()
+    {
+        return $this->hasMany(Course::class);
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isUser()
+    {
+        return $this->role === 'user';
+    }
+
     public function topicProgress()
     {
         return $this->hasMany(TopicProgress::class);

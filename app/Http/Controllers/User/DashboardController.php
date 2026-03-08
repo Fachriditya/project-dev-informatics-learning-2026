@@ -14,7 +14,7 @@ class DashboardController extends Controller
         $totalCourses = $user->courses()->count();
         $totalTopics = $user->courses()->withCount('topics')->get()->sum('topics_count');
         $completedTopics = $user->topicProgress()->where('is_completed', true)->count();
-
+        
         $currentStreak = 0;
         
         $recentActivity = $user->studyLogs()
@@ -25,9 +25,9 @@ class DashboardController extends Controller
         
         $tracks = \App\Models\Track::withCount(['courses' => function($query) use ($user) {
             $query->where('user_id', $user->id);
-        }])->get();
+        }])->orderBy('order')->get();
         
-        return view('dashboard', compact(
+        return view('user.dashboard', compact(
             'totalCourses',
             'totalTopics',
             'completedTopics',

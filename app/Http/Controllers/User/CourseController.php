@@ -10,20 +10,34 @@ use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        if (!$request->has('track')) {
+            return redirect()->route('tracks.index');
+        }
+        
+        $selectedTrack = Track::findOrFail($request->track);
+        
         $courses = auth()->user()->courses()
             ->with('track')
+            ->withCount('topics')
+            ->where('track_id', $selectedTrack->id)
             ->orderBy('semester')
             ->get();
         
-        return view('user.courses.index', compact('courses'));
+        return view('user.courses.index', compact('courses', 'selectedTrack'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        if (!$request->has('track')) {
+            return redirect()->route('tracks.index');
+        }
+        
+        $selectedTrack = Track::findOrFail($request->track);
         $tracks = Track::orderBy('order')->get();
-        return view('user.courses.create', compact('tracks'));
+        
+        return view('user.courses.create', compact('tracks', 'selectedTrack'));
     }
 
     public function store(Request $request)
@@ -41,21 +55,8 @@ class CourseController extends Controller
         
         Course::create($validated);
         
-        return redirect()->route('courses.index')
+        return redirect()->route('courses.index', ['track' => $validated['track_id']])
             ->with('success', 'Course created successfully!');
-    }
-
-    public function show(Course $course)
-    {
-        if ($course->user_id !== auth()->id()) {
-            abort(403);
-        }
-        
-        $course->load(['topics' => function($query) {
-            $query->orderBy('order');
-        }]);
-        
-        return view('user.courses.show', compact('course'));
     }
 
     public function edit(Course $course)
@@ -64,9 +65,11 @@ class CourseController extends Controller
             abort(403);
         }
         
-        $tracks = Track::orderBy('order')->get();
-        return view('user.courses.edit', compact('course', 'tracks'));
+        $course->load('track'); // Load track relationship
+        
+        return view('user.courses.edit', compact('course'));
     }
+    
 
     public function update(Request $request, Course $course)
     {
@@ -88,7 +91,7 @@ class CourseController extends Controller
         
         $course->update($validated);
         
-        return redirect()->route('courses.show', $course)
+        return redirect()->route('courses.index', ['track' => $course->track_id])
             ->with('success', 'Course updated successfully!');
     }
 
@@ -98,9 +101,10 @@ class CourseController extends Controller
             abort(403);
         }
         
+        $trackId = $course->track_id;
         $course->delete();
         
-        return redirect()->route('courses.index')
+        return redirect()->route('courses.index', ['track' => $trackId])
             ->with('success', 'Course deleted successfully!');
     }
 }
